@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # In[1]:
@@ -48,6 +48,7 @@ if not a:
     print('    second argument: subject ID of the patient (prefix of the image name, including the scan number)')
     print('                     (for example Subject_01_PSIR_6_1 )')
     print('    third argument: suffix of the image (either .img, .nii or .nii.gz)')
+    print('    fourth argument: reconstruction software (either ptoa or dcm2niix)')
     print('')
     print('N.B.: Please check that there is no full stop (.) inside the file name.')
     sys.exit()
@@ -57,11 +58,13 @@ elif a[0]=='-f':
     sub_ID='CogNID009_DelRec_-_PSIR_UK7T_0p7mm_BestNPI_7_5'
     sub_dir=in_dir+'/'+sub_ID
     suffix='.nii.gz'
+    recon='ptoa'
     show_data=True
 else:
     in_dir=a[0]
     sub_ID=a[1]
     suffix=a[2]
+    recon=a[3]
     sub_dir=in_dir+'/'+sub_ID
     show_data=True
 
@@ -76,22 +79,26 @@ out_dir = os.path.join(in_dir)
 #sub_dir=in_dir+'/'+sub_ID
 #suffix='.img'
 
-print('First inversion data is '+sub_dir+'_modulus_cphase00'+suffix)
-
 
 # In[5]:
 
 
-print('First inversion data is '+sub_dir+'_modulus_cphase00'+suffix)
+if recon == 'ptoa':
+    imgm1=nib.load(sub_dir+'_modulus_cphase00'+suffix)
+    imgm2=nib.load(sub_dir+'_modulus_cphase01'+suffix)
+    imgp1=nib.load(sub_dir+'_phase_cphase00'+suffix)
+    imgp2=nib.load(sub_dir+'_phase_cphase01'+suffix)
+elif recon == 'dcm2niix':
+    imgm1=nib.load(sub_dir+'_t732'+suffix)
+    imgm2=nib.load(sub_dir+'_t2157'+suffix)
+    imgp1=nib.load(sub_dir+'_ph_t732'+suffix)
+    imgp2=nib.load(sub_dir+'_ph_t2157'+suffix)
 
-imgm1=nib.load(sub_dir+'_modulus_cphase00'+suffix)
-imgm1_data=imgm1.get_fdata()
+    
 hdr = imgm1.header
-imgm2=nib.load(sub_dir+'_modulus_cphase01'+suffix)
+imgm1_data=imgm1.get_fdata()
 imgm2_data=imgm2.get_fdata()
-imgp1=nib.load(sub_dir+'_phase_cphase00'+suffix)
 imgp1_data=imgp1.get_fdata()
-imgp2=nib.load(sub_dir+'_phase_cphase01'+suffix)
 imgp2_data=imgp2.get_fdata()
 
 if show_data:
@@ -198,10 +205,4 @@ if show_data:
 
 TI2_PSIR_img = nib.nifti1.Nifti1Image(TI2_PSIR, None, header=imgm1.header)
 TI2_PSIR_img.to_filename(sub_dir+'_TI2_PSIR.nii.gz')
-
-
-# In[ ]:
-
-
-
 
