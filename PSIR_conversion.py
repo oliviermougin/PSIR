@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[1]:
@@ -52,19 +52,22 @@ if not a:
     print('')
     print('N.B.: Please check that there is no full stop (.) inside the file name.')
     sys.exit()
-elif a[0]=='-f':
+elif a[0]=='-f' or a[0]=='--ip=127.0.0.1':
     print('You are on the notebook, please check below the ID, directory and suffix of images provided.')
-    in_dir='/home/olivier/Documents/work_todo/Bitan/PSIRs'
-    sub_ID='CogNID009_DelRec_-_PSIR_UK7T_0p7mm_BestNPI_7_5'
+    #in_dir='C:\\Users\\ppzom1\\Downloads\\OneDrive_1_17-06-2021'
+    in_dir='/home/olivier/Documents/work_todo/Bitan/test'
+    sub_ID='T1TFE_20210914160449_PSIR_0.55mmSENSE_5'
     sub_dir=in_dir+'/'+sub_ID
     suffix='.nii.gz'
-    recon='ptoa'
+    recon='dcm2niix'
+    resol='0p55mm'
     show_data=True
 else:
     in_dir=a[0]
     sub_ID=a[1]
     suffix=a[2]
     recon=a[3]
+    resol=a[4]
     sub_dir=in_dir+'/'+sub_ID
     show_data=True
 
@@ -80,7 +83,7 @@ out_dir = os.path.join(in_dir)
 #suffix='.img'
 
 
-# In[5]:
+# In[4]:
 
 
 if recon == 'ptoa':
@@ -89,17 +92,23 @@ if recon == 'ptoa':
     imgp1=nib.load(sub_dir+'_phase_cphase00'+suffix)
     imgp2=nib.load(sub_dir+'_phase_cphase01'+suffix)
 elif recon == 'dcm2niix':
-    imgm1=nib.load(sub_dir+'_t732'+suffix)
-    imgm2=nib.load(sub_dir+'_t2157'+suffix)
-    imgp1=nib.load(sub_dir+'_ph_t732'+suffix)
-    imgp2=nib.load(sub_dir+'_ph_t2157'+suffix)
+    if resol == '0p7mm':
+        imgm1=nib.load(sub_dir+'_t732'+suffix)
+        imgm2=nib.load(sub_dir+'_t2157'+suffix)
+        imgp1=nib.load(sub_dir+'_ph_t732'+suffix)
+        imgp2=nib.load(sub_dir+'_ph_t2157'+suffix) 
+    elif resol == '0p55mm':
+        imgm1=nib.load(sub_dir+'_t818'+suffix)
+        imgm2=nib.load(sub_dir+'_t2618'+suffix)
+        imgp1=nib.load(sub_dir+'_ph_t818'+suffix)
+        imgp2=nib.load(sub_dir+'_ph_t2618'+suffix)
 
     
 hdr = imgm1.header
-imgm1_data=imgm1.get_fdata()
-imgm2_data=imgm2.get_fdata()
-imgp1_data=imgp1.get_fdata()
-imgp2_data=imgp2.get_fdata()
+imgm1_data=np.squeeze(imgm1.get_fdata())
+imgm2_data=np.squeeze(imgm2.get_fdata())
+imgp1_data=np.squeeze(imgp1.get_fdata())
+imgp2_data=np.squeeze(imgp2.get_fdata())
 
 if show_data:
     midslice=int(imgm1_data.shape[2]/2)
@@ -109,7 +118,7 @@ if show_data:
                  np.abs(imgm2_data[:,:,midslice])])
 
 
-# In[6]:
+# In[5]:
 
 
 # Phase in radian and four volumes to deal with:
@@ -123,7 +132,7 @@ if show_data:
                  np.real(S2[:,:,midslice])])
 
 
-# In[7]:
+# In[6]:
 
 
 T1w=np.real(np.multiply(np.conj(S1),S2));
@@ -137,7 +146,7 @@ if show_data:
     show_slices([S0[:,:,midslice],S0[:,midy,:],S0[midx,:,:]])   
 
 
-# In[8]:
+# In[7]:
 
 
 PSIR=np.divide(S1m,S0,out=np.zeros_like(S1m), where=(S0!=0))
@@ -158,7 +167,7 @@ if show_data:
     
 
 
-# In[9]:
+# In[8]:
 
 
 MP2RAGEn=np.real(np.multiply(np.conj(S1),S2))
@@ -172,7 +181,7 @@ if show_data:
     show_slices([(MP2RAGE[:,:,midslice]),(MP2RAGE[:,midy,:]),(MP2RAGE[midx,:,:])],[-0.5,0.5])
 
 
-# In[15]:
+# In[9]:
 
 
 
@@ -196,7 +205,7 @@ if show_data:
     
 
 
-# In[16]:
+# In[10]:
 
 
 TI2_PSIR=np.multiply(PSIR+1,abs(S2))
@@ -205,4 +214,10 @@ if show_data:
 
 TI2_PSIR_img = nib.nifti1.Nifti1Image(TI2_PSIR, None, header=imgm1.header)
 TI2_PSIR_img.to_filename(sub_dir+'_TI2_PSIR.nii.gz')
+
+
+# In[ ]:
+
+
+
 
